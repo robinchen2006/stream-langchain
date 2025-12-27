@@ -37,15 +37,32 @@ with st.container():
                 | {st.session_state["PINECONE_API_KEY"]} | {st.session_state["PINECONE_ENVIRONMENT"]} |
                 """)
     
+if "messages" not in st.session_state:
+    st.session_state.messages = []
+
+
 
 if chat:
     with st.container():
         st.header("Test OpenAI Chat Model")
-        user_input = st.text_input("Enter your message to the chat model:",max_chars=None,key=None,type="default")
-        if st.button("Send", key="send_button"):
-            if user_input:
-                response = chat([HumanMessage(content=user_input)])
-                st.write(response.content)
+        for message in st.session_state.messages:
+            if message["role"] == "user":
+                with st.chat_message("user"):
+                    st.markdown(message["content"])
+            elif message["role"] == "assistant":
+                with st.chat_message("assistant"):
+                    st.markdown(message["content"])
+
+        user_input = st.chat_input("Type your message here...", key="chat_input")
+        if user_input:
+            with st.chat_message("user"):
+                st.markdown(f"{user_input}")
+            response = chat([HumanMessage(content=user_input)])
+            with st.chat_message("assistant"):
+                st.markdown(f"{response.content}")
+            st.session_state.messages.append({"role": "assistant", "content": response.content})
+            st.session_state.messages.append({"role": "user", "content": user_input})
+
 else:
     with st.container():
         st.warning("Please set your OpenAI API Key in the OpenAI Settings page to test the chat model.")
